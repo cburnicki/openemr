@@ -117,6 +117,71 @@ git merge upstream-sync
 -   Deploy manually from `production` branch when you're confident changes are stable
 -   Merge features directly to `production` when ready
 
+## Build Production Image From odovita/openemr
+
+The steps below live in the `openemr-devops` tooling repo but build the application from this fork.
+
+1. Clone the tooling repo and enter it:
+
+    ```bash
+    git clone https://github.com/openemr/openemr-devops.git
+    cd openemr-devops
+    ```
+
+2. Copy the latest production image definition so we can customize it without touching upstream files:
+
+    ```bash
+    cp -a docker/openemr/7.0.4 docker/openemr/7.0.4-odovita
+    ```
+
+3. Edit `docker/openemr/7.0.4-odovita/Dockerfile` and change the `git clone` line (around line 90) to pull our fork’s `production` branch:
+
+    ```Dockerfile
+    RUN apk add --no-cache build-base \
+        && git clone --branch production https://github.com/odovita/openemr.git --depth 1 \
+        && rm -rf openemr/.git \
+        && cd openemr \
+        ...
+    ```
+
+    Keep the rest of the build block unchanged so Composer/NPM steps remain identical to the official image.
+
+4. Build the Docker image through the bundled `docker compose` stack:
+
+    ```bash
+    cd docker/openemr
+    export DOCKER_CONTEXT_PATH=7.0.4-odovita
+    COMPOSE_PROFILES=prod docker compose build
+    ```
+
+5. (Optional) Smoke-test the container with MariaDB:
+
+    ```bash
+    COMPOSE_PROFILES=prod docker compose up -d --wait
+    # browse http://localhost:8080 or inspect logs
+    docker compose logs openemr
+    docker compose down --volumes
+    ```
+
+6. Push a multi-arch image to your registry when you are ready:
+
+    ```bash
+    docker buildx build \
+      --platform linux/amd64,linux/arm64 \
+      -t ghcr.io/odovita/openemr:production \
+      --push docker/openemr/7.0.4-odovita
+    ```
+
+### Keeping The Fork Updated
+
+-   Regularly sync with upstream:
+    ```bash
+    git remote add upstream https://github.com/openemr/openemr.git
+    git fetch upstream
+    git rebase upstream/master   # or merge, depending on your workflow
+    ```
+-   After merging upstream changes into `odovita/openemr`, rebuild following the steps above to produce a fresh production image.
+
 ## License
 
 Same as upstream OpenEMR - GNU General Public License v3.0
