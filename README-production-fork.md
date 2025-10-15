@@ -39,12 +39,13 @@ We welcome contributions! Please follow our branching strategy below to ensure c
 
 ### Main Branches
 
--   **`upstream-sync`** - Clean mirror of official OpenEMR repository
+-   **`upstream-sync-<version>`** - Clean mirror of official OpenEMR version branch (e.g., `upstream-sync-7_0_3`)
 -   **`production`** - Our deployment branch (what we install from)
+-   **`release-<version>-odovita`** - Our versioned release branches (e.g., `release-7.0.3-odovita`)
 
 ### The Process
 
-We maintain our own fast-moving production environment while keeping clean contribution paths to the upstream OpenEMR project.
+We maintain our own fast-moving production environment while syncing with stable upstream release branches (NOT master, which contains unreleased code).
 
 ### Initial Setup
 
@@ -52,19 +53,42 @@ We maintain our own fast-moving production environment while keeping clean contr
 # Add upstream remote (one time setup)
 git remote add upstream https://github.com/openemr/openemr.git
 
-# Set up upstream-sync branch
-git checkout -b upstream-sync
-git pull upstream master
-git push -u origin upstream-sync
+# Fetch all upstream branches
+git fetch upstream
+```
+
+### Syncing with a New Upstream Release
+
+**IMPORTANT**: Never sync with upstream's `master` branch - it contains unreleased code. Always sync with official release branches.
+
+```bash
+# 1. Determine the latest stable release version (e.g., 7.0.3)
+# Check https://github.com/openemr/openemr/releases for the latest version
+
+# 2. Check the openemr-devops repo to find the branch name format
+# Look in https://github.com/openemr/openemr-devops/tree/master/docker/openemr/7.0.3
+# Inspect the Dockerfile to see which branch it uses (usually rel-703 or 7_0_3 format)
+
+# 3. Create a versioned upstream sync branch
+git fetch upstream
+git checkout -b upstream-sync-7_0_3 upstream/rel-703  # Use actual branch name from step 2
+git push -u origin upstream-sync-7_0_3
+
+# 4. Merge into production
+git checkout production
+git merge upstream-sync-7_0_3
+git push origin production
+
+# 5. Create your own versioned release branch
+git checkout -b release-7.0.3-odovita
+git push -u origin release-7.0.3-odovita
 ```
 
 ### Creating a New Feature/Fix
 
 ```bash
-# 1. Start from clean upstream
-git checkout upstream-sync
-git pull upstream master
-git push origin upstream-sync
+# 1. Start from the appropriate upstream sync branch
+git checkout upstream-sync-7_0_3  # Use your current version
 
 # 2. Create feature branch
 git checkout -b feature/your-feature-name
@@ -75,17 +99,11 @@ git commit -m "Fix: your changes"
 
 # 4. Push feature branch
 git push -u origin feature/your-feature-name
-```
 
-### Getting Feature into Production
-
-```bash
-# When you're confident the feature is stable
+# 5. Merge into production when ready
 git checkout production
 git merge feature/your-feature-name
 git push origin production
-
-# Deploy manually from production branch
 ```
 
 ### Creating PR to Upstream (Optional)
@@ -93,29 +111,17 @@ git push origin production
 Only create PRs for features that would benefit the broader OpenEMR community:
 
 1. Go to GitHub and create PR from your `feature/your-feature-name` branch
-2. Target the upstream repository's main branch
+2. Target the upstream repository's appropriate release branch
 3. **Never create PRs from your production branch**
 4. Not every feature needs to be contributed - keep organization-specific customizations in your fork
 
-### Staying Synced with Upstream
-
-```bash
-# Regular sync (do this weekly)
-git checkout upstream-sync
-git pull upstream master
-git push origin upstream-sync
-
-# Then merge important upstream changes to production as needed
-git checkout production
-git merge upstream-sync
-```
-
 ### Important Notes
 
+-   **Never sync with upstream's `master` branch** - it contains unreleased, unstable code
+-   **Always sync with versioned release branches** (e.g., `rel-703`, `7_0_3`) found in openemr-devops Dockerfiles
 -   **Never use GitHub's "Sync fork" button** - it creates messy merge commits
--   Always create feature branches from `upstream-sync` for clean PR history
+-   Always create feature branches from versioned `upstream-sync-<version>` branches for clean PR history
 -   Deploy manually from `production` branch when you're confident changes are stable
--   Merge features directly to `production` when ready
 
 ## Build Production Image From odovita/openemr
 
@@ -128,17 +134,17 @@ The steps below live in the `openemr-devops` tooling repo but build the applicat
     cd openemr-devops
     ```
 
-2. Copy the latest production image definition so we can customize it without touching upstream files:
+2. Find the correct version directory (e.g., 7.0.3) and copy it:
 
     ```bash
-    cp -a docker/openemr/7.0.4 docker/openemr/7.0.4-odovita
+    cp -a docker/openemr/7.0.3 docker/openemr/7.0.3-odovita
     ```
 
-3. Edit `docker/openemr/7.0.4-odovita/Dockerfile` and change the `git clone` line (around line 90) to pull our fork’s `production` branch:
+3. Edit `docker/openemr/7.0.3-odovita/Dockerfile` and change the `git clone` line to pull from our fork's versioned release branch:
 
     ```Dockerfile
     RUN apk add --no-cache build-base \
-        && git clone --branch production https://github.com/odovita/openemr.git --depth 1 \
+        && git clone --branch release-7.0.3-odovita https://github.com/odovita/openemr.git --depth 1 \
         && rm -rf openemr/.git \
         && cd openemr \
         ...
@@ -150,7 +156,7 @@ The steps below live in the `openemr-devops` tooling repo but build the applicat
 
     ```bash
     cd docker/openemr
-    export DOCKER_CONTEXT_PATH=7.0.4-odovita
+    export DOCKER_CONTEXT_PATH=7.0.3-odovita
     COMPOSE_PROFILES=prod docker compose build
     ```
 
@@ -168,19 +174,13 @@ The steps below live in the `openemr-devops` tooling repo but build the applicat
     ```bash
     docker buildx build \
       --platform linux/amd64,linux/arm64 \
-      -t ghcr.io/odovita/openemr:production \
-      --push docker/openemr/7.0.4-odovita
+      -t ghcr.io/odovita/openemr:7.0.3-odovita \
+      --push docker/openemr/7.0.3-odovita
     ```
 
 ### Keeping The Fork Updated
 
--   Regularly sync with upstream:
-    ```bash
-    git remote add upstream https://github.com/openemr/openemr.git
-    git fetch upstream
-    git rebase upstream/master   # or merge, depending on your workflow
-    ```
--   After merging upstream changes into `odovita/openemr`, rebuild following the steps above to produce a fresh production image.
+When a new OpenEMR version is released, follow the "Syncing with a New Upstream Release" steps above, then rebuild your Docker image with the new version number.
 
 ## License
 
