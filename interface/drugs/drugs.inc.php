@@ -59,7 +59,8 @@ function _validateEncounter($patient_id, $encounter_id)
         return xlt('No active encounter selected. To dispense medication, you must first select or create a valid encounter for this patient. Please return to the patient dashboard, select or create an encounter, then try again.');
     }
 
-    $encounter = new EncounterService()->getOneByPidEid($patient_id, $encounter_id);
+    $encounterService = new EncounterService();
+    $encounter = $encounterService->getOneByPidEid($patient_id, $encounter_id);
     
     if (empty($encounter)) {
         // This is a system error - the encounter ID exists but doesn't match the patient
