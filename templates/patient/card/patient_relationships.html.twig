@@ -13,9 +13,9 @@
             <div>
                 <strong>
                     {% if rel.entity.getPatientId() == patient_id %}
-                        {{ rel.related_name|text }}
+                        <a href="#" onclick="navigateToPatient({{ rel.entity.getRelatedPatientId() }}); return false;" class="text-body">{{ rel.related_name|text }}</a>
                     {% else %}
-                        {{ rel.patient_name|text }}
+                        <a href="#" onclick="navigateToPatient({{ rel.entity.getPatientId() }}); return false;" class="text-body">{{ rel.patient_name|text }}</a>
                     {% endif %}
                 </strong>
                 <small class="text-muted ml-2">{{ rel.relationship_title|text }}</small>
@@ -32,6 +32,14 @@
     {% endfor %}
 {% endif %}
 </div>
+
+<script>
+// Navigate to another patient's demographics page
+function navigateToPatient(pid) {
+    top.restoreSession();
+    top.RTop.location = top.webroot_url + '/interface/patient_file/summary/demographics.php?set_pid=' + encodeURIComponent(pid);
+}
+</script>
 
 {% if auth %}
 <!-- Add Relationship Modal -->
