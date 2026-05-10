@@ -14,7 +14,7 @@
 require_once("../globals.php");
 require_once("$srcdir/patient.inc.php");
 require_once("$srcdir/options.inc.php");
-require_once("../drugs/drugs.inc.php");
+require_once("../drugs/inventory_acl.inc.php");
 require_once("../../custom/code_types.inc.php");
 
 use OpenEMR\Common\Acl\AclMain;
