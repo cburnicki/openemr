@@ -23,6 +23,7 @@ require_once($GLOBALS['fileroot'] . "/library/options.inc.php");
 use OpenEMR\Common\Csrf\CsrfUtils;
 use OpenEMR\Common\Forms\FormActionBarSettings;
 use OpenEMR\Common\Http\oeHttp;
+use OpenEMR\Core\OEGlobalsBag;
 use OpenEMR\Rx\RxList;
 use PHPMailer\PHPMailer\PHPMailer;
 use OpenEMR\Common\Database\QueryUtils;
@@ -388,6 +389,7 @@ class C_Prescription extends Controller
         $prescriptionId = $prescription->id;
 
         $dispenseError = null;
+        $saleId = 0;
 
         if ($drugId <= 0) {
             $dispenseError = xl('No in-house drug selected for dispensing');
@@ -423,7 +425,7 @@ class C_Prescription extends Controller
         }
 
         // Success - open the bottle-label popup, then redirect to the list.
-        $labelUrl = $GLOBALS['webroot'] . '/interface/drugs/print_drug_label.php?sale_id=' . urlencode((string)$saleId);
+        $labelUrl = OEGlobalsBag::getInstance()->getString('webroot') . '/interface/drugs/print_drug_label.php?sale_id=' . urlencode((string)$saleId);
         $listUrl  = 'controller.php?prescription&list&id=' . urlencode((string)$patientId);
         echo "<script>";
         echo "window.open(" . js_escape($labelUrl) . ", '_blank');";

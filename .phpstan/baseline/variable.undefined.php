@@ -4379,19 +4379,14 @@ $ignoreErrors[] = [
     'path' => __DIR__ . '/../../interface/drugs/add_edit_lot.php',
 ];
 $ignoreErrors[] = [
-    'message' => '#^Variable \\$pid might not be defined\\.$#',
-    'count' => 1,
-    'path' => __DIR__ . '/../../interface/drugs/dispense_drug.php',
-];
-$ignoreErrors[] = [
     'message' => '#^Variable \\$srcdir might not be defined\\.$#',
     'count' => 1,
-    'path' => __DIR__ . '/../../interface/drugs/dispense_drug.php',
+    'path' => __DIR__ . '/../../interface/drugs/print_drug_label.php',
 ];
 $ignoreErrors[] = [
     'message' => '#^Variable \\$webroot might not be defined\\.$#',
     'count' => 1,
-    'path' => __DIR__ . '/../../interface/drugs/dispense_drug.php',
+    'path' => __DIR__ . '/../../interface/drugs/print_drug_label.php',
 ];
 $ignoreErrors[] = [
     'message' => '#^Variable \\$srcdir might not be defined\\.$#',
