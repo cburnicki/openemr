@@ -422,8 +422,13 @@ class C_Prescription extends Controller
             exit;
         }
 
-        // Success - redirect to prescription list
-        $this->list_action($patientId);
+        // Success - open the bottle-label popup, then redirect to the list.
+        $labelUrl = $GLOBALS['webroot'] . '/interface/drugs/dispense_drug.php?sale_id=' . urlencode((string)$saleId);
+        $listUrl  = 'controller.php?prescription&list&id=' . urlencode((string)$patientId);
+        echo "<script>";
+        echo "window.open(" . js_escape($labelUrl) . ", '_blank');";
+        echo "window.location.href = " . js_escape($listUrl) . ";";
+        echo "</script>";
         exit;
     }
 
