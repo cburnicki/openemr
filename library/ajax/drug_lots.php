@@ -17,7 +17,6 @@ require_once("../../interface/globals.php");
 use OpenEMR\Common\Acl\AclMain;
 use OpenEMR\Common\Csrf\CsrfUtils;
 use OpenEMR\Common\Database\QueryUtils;
-use OpenEMR\Common\Session\SessionWrapperFactory;
 use OpenEMR\Services\DrugSalesService;
 
 if (!CsrfUtils::verifyCsrfToken($_GET['csrf_token_form'] ?? '')) {
@@ -39,8 +38,7 @@ if ($drugId === null || $drugId === false || $drugId <= 0) {
 
 // Resolve the user's default warehouse — same lookup sellDrug() does so the
 // picker matches what the auto-selector would consume.
-$session = SessionWrapperFactory::getInstance()->getActiveSession();
-$authUserRaw = $session->get('authUser');
+$authUserRaw = $_SESSION['authUser'] ?? '';
 $user = is_scalar($authUserRaw) ? (string)$authUserRaw : '';
 $defaultWarehouse = '';
 if ($user !== '') {
