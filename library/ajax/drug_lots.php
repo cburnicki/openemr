@@ -20,7 +20,9 @@ use OpenEMR\Common\Database\QueryUtils;
 use OpenEMR\Common\Session\SessionWrapperFactory;
 use OpenEMR\Services\DrugSalesService;
 
-CsrfUtils::checkCsrfInput(INPUT_GET, dieOnFail: true);
+if (!CsrfUtils::verifyCsrfToken($_GET['csrf_token_form'] ?? '')) {
+    CsrfUtils::csrfNotVerified();
+}
 
 if (!AclMain::aclCheckCore('patients', 'rx')) {
     http_response_code(403);
